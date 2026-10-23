@@ -24,6 +24,14 @@ class TxQueueFullError(DriverError):
     pass
 
 
+class ParamError(DriverError):
+    '''a MAVLink parameter get or set failed for some of the requested names'''
+    def __init__(self, message, results=None, errors=None):
+        super(ParamError, self).__init__(message)
+        self.results = results or {}
+        self.errors = errors or {}
+
+
 class CANFrame:
 
     def __init__(self, can_id, data, extended, ts_monotonic=None, ts_real=None, canfd=False):
@@ -157,6 +165,17 @@ class AbstractDriver(object):
     def set_signing_passphrase(self, passphrase):
         '''set MAVLink2 signing passphrase'''
         pass
+
+    def supports_mavlink_params(self):
+        '''true if this driver can get and set autopilot MAVLink parameters'''
+        return False
+
+    def _no_mavlink_params(self, *args, **kwargs):
+        raise DriverError('MAVLink parameters are not supported by this driver')
+
+    get_param = get_params = set_param = set_params = _no_mavlink_params
+    request_params = send_params = fetch_all_params = _no_mavlink_params
+    reboot_autopilot = add_param_listener = _no_mavlink_params
 
     def stream_progress(self):
         '''stream progress of the current stream'''
